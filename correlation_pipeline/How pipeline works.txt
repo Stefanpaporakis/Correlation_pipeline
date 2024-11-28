@@ -1,0 +1,73 @@
+How to go from calculating correlations to mapping to producing PADFs:
+
+#### CAN EITHER DO MAPPING FIRST OR CORRELATIONS ####
+
+Lets start with correlations
+
+Run script "runner_xfmcorr.py" in python folder
+	- 	Put group and run tag (159) 
+	-	For batch runs, input group, run start and run stop
+	-	The script will use "20027_config.txt" and "config_xfmcorr_20027" in "configs" folder so check it has the right params
+	-	Make sure dlistFlag is set to False originally
+	-	correlations will be saved in folder labelled corr_nps"npatsum set in config file"and will have a and b set
+
+Once correlations calculated run "subtract_bg.py" from correlation_pipeline/angular_correlation/
+	-	Set q_q = False to subtract 3D correlation volume, will save a file with 3D_bgsub_....
+	-	Set q_q = True to subtract qslice, will save file with bgsub_....
+
+To plot correlations you can either look over the 3D volume with "3D_corr.py" in correlation_pipeline/angular_correlations:
+	-	Choose where to slice, change model param to 'ia3d' or 'hex' to plot model phase positions for comparison
+Or compare slices from different runs with "ang_plot_compare_0.2.py" in the same directory
+
+
+################ Now some mapping ################
+
+To map radial peak position, summed intensity, max value and radial peak height, run "batch_well_info.py" in the correlation_pipeline/mapping/ directory
+	-	Set run number and group
+	-	Output is a series of folders with parameter names in the eiger directory under mapping_stuff/
+
+Produce 1D and 2D npy files, run "diffraction_image.py" in the correlation_pipeline/overviews/ directory
+	-	Set reduced_1D_2D to False if you havent reduced the data yet
+
+To look at all the maps, 1D and ang_corr, run "overview_0.1.py" in the overviews/ directory
+
+To look at histograms of the maps, run 'hist.py' in the /overviews directory
+
+############### Filtering data using the maps ###########
+
+If your sample is not uniform, it will affect the correlations and therefore the PADF. So if you have noticed wierd bumps in the correlations, or high intensity areas of the maps, we can filter them out and run new correlations for more converged data.
+
+You can pick where you would like to reduce you data from by running "filter_between_lower_upper_0.1.py"
+	-	Choose which metric to filter by with the analysis param (set to 'radial_peak_position.npy' by default
+	-	It will initially show you the well and histogram, you then input the q-range you'd like to isolate and it will show you the map and histogram again with an overlay of what you want to filter between, save if you're happy with it
+	-	If you want to exclude areas, i.e, everywhere in the well except a position, set ignore_ia3d to True, this time the q range you set will be ignored from the data, again save if happy.
+
+
+Once happy with filtering, you can run "diffraction_image.py" again, this time with reduced_1D_2D set to True, this will produce 1D and 2D numpy files with reduceddiffraction informationn
+	-	Make sure to set upper and lower params to the same as the filtering. I.e, if you fitlered with "filter_between_lower_upper_0.1.py" to q-ranges 0.5 to 1, make sure in the "diffraction_image.py" script you set lower to 0.5 and upper to 1, or else it wont work.
+
+You can look at and compare the reduced and full diffraction patterns with "compare_2D_and_1D.py" in the /overviews directory
+
+If you're happy, you can now filter the correlations by the same upper and lower bounds as before by running "runner_xfmcorr_batchfiltered.py" where you need to include the group, run, mapping method and lower and upper bounds in the format:
+"batch.append( runinfo('75MO_W_P4_2H',383,'radpeakpos','1.48_1.66') )"
+
+
+Once correlations calculated run "subtract_bg.py" from correlation_pipeline/angular_correlation/
+	-	Set q_q = False to subtract 3D correlation volume, will save a file with 3D_bgsub_....
+	-	Set q_q = True to subtract qslice, will save file with bgsub_....
+	-	Remember, you correlations are now reduced, so you need to subtract the baxkground from the reduced correlations, which are saved in a different outpath file, make sure you set the path correactly in the bg_sub script to pull the reduced correlations
+
+To plot reduced correlations you can either look over the 3D volume with "3D_corr.py" in correlation_pipeline/angular_correlations:
+	-	Choose where to slice, change model param to 'ia3d' or 'hex' to plot model phase positions for comparison
+Or compare slices from different runs with "ang_plot_compare_0.2.py" in the same directory
+
+
+
+You are now ready to calculate PADFs
+
+
+
+
+
+
+
